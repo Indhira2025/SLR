@@ -9,7 +9,7 @@ You can install the package directly from GitHub using:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("Indhira2025/SLR")
+devtools::install_github("Indhira2025/SLR", build_vignettes = TRUE)
 ```
 ## Usage
 Load the package:

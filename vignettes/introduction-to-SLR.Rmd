@@ -1,0 +1,171 @@
+---
+title: "Introduction to SLR: A Simple Linear Regression Function"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to SLR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(SLR)
+
+
+
+
+
+```
+
+------------------------------------------------------------------------
+
+# Overview
+
+The **SLR** package provides a simple implementation of **Simple Linear Regression (SLR)** using the function `my_simplelm()`.\
+
+This vignette explains the theory behind SLR, shows formulas for coefficients , and demonstrates how to use the function.
+
+# Theoretical Background
+
+In a **Simple Linear Regression (SLR)** model, we assume that the relationship between a continuous outcome variable $y$ and a single predictor variable $x$ is linear. The model can be expressed as:
+
+$$
+y_i = \beta_0 + \beta_1 x_i + \varepsilon_i, \quad i = 1, 2, \ldots, n
+$$
+
+where: - $y_i$ is the response variable for the $i^{th}$ observation,\
+- $x_i$ is the corresponding predictor variable,\
+- $\beta_0$ is the **intercept** (the expected value of $y$ when $x = 0$),\
+- $\beta_1$ is the **slope coefficient** (the change in $y$ for a one-unit increase in $x$), and\
+- $\varepsilon_i$ is the random error term, assumed to satisfy the following conditions:
+
+$$
+E[\varepsilon_i] = 0, \quad Var(\varepsilon_i) = \sigma^2, \quad Cov(\varepsilon_i, \varepsilon_j) = 0 \text{ for } i \neq j
+$$
+
+# Coefficients
+
+By differentiating $SSR$ with respect to $\beta_0$ and $\beta_1$, setting the derivatives equal to zero, and solving the resulting **normal equations**, we obtain the **least squares estimators**:
+
+$$
+\hat{\beta}_1 = \frac{\sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})}{\sum_{i=1}^{n} (x_i - \bar{x})^2}
+$$
+
+$$
+\hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}
+$$
+
+where:
+
+$$
+\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i, \quad \bar{y} = \frac{1}{n}\sum_{i=1}^{n} y_i
+$$
+
+The fitted regression line is therefore:
+
+$$
+\hat{y}_i = \hat{\beta}_0 + \hat{\beta}_1 x_i
+$$
+
+and the residuals are given by:
+
+$$
+e_i = y_i - \hat{y}_i
+$$
+
+The **coefficient of determination** $R^2$ measures the proportion of variance in $y$ that is explained by $x$:
+
+$$
+R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}
+$$
+
+# Example with Simulated Data
+
+```{r}
+set.seed(123)
+x <- 1:10
+y <- 2 + 1.5 * x + rnorm(10, 0, 1)
+
+fit <- my_simplelm(x, y, plot = TRUE)
+fit
+
+```
+
+# Model Output
+
+```{r}
+
+fit$coefficients
+fit$R_squared
+
+```
+
+The `my_simplelm()` function returns:\
+-coefficients: Intercept and Slope estimates\
+-fitted_values: Predicted y values\
+-residuals: Difference between observed and fitted values\
+-r_squared: Coefficient of determination\
+-Optionally, a plot showing the fitted regression line
+
+# Performance and Correctness Comparison
+
+To validate the implementation of `my_simplelm()`, we compare its output and runtime performance against R’s built-in `lm()` function.
+
+## Comparing with Base R’s `lm()`
+
+```{r}
+lm_fit <- lm(y ~ x)
+summary(lm_fit)$coefficients
+fit$coefficients
+
+
+```
+
+The slope and intercept estimates should match those from `lm()` (within rounding error).
+
+```{r}
+# Compare coefficients
+all.equal(fit$coefficients, coef(lm_fit))
+
+```
+
+If everything is correct, this should return:`TRUE`
+
+Next, we compare their computational efficiency using the `bench` package
+
+## Compare efficiency with `bench::mark`
+
+```{r}
+
+## ----benchmark, message=FALSE, warning=FALSE----
+if (requireNamespace("bench", quietly = TRUE)) {
+  bench::mark(
+    my_simplelm = my_simplelm(x, y, plot = FALSE),
+    lm = lm(y ~ x),
+    check = FALSE
+    
+  )
+}
+
+```
+
+The benchmark results indicate that `my_simplelm()` is substantially faster than `lm()`, as it uses closed-form calculations instead of matrix decomposition.
+
+-   `lm()` performs extra steps: formula parsing, model frame creation, QR decomposition, etc.
+
+-   `my_simplelm()` computes the estimates using **direct formulas**, avoiding all the overhead.
+
+# Interpreting the Results
+
+-   **Intercept (**$\beta_0$): Expected value of $y$ when $x = 0$.
+
+-   **Slope (**$\beta_1$): Average change in $y$ for a one-unit increase in $x$.
+
+-   $R^2$: Proportion of the variance in $y$ explained by $x$.
+
+# Summary
+
+This vignette demonstrated how `my_simplelm()` performs simple linear regression from first principles — providing an educational way to understand how least squares estimates are derived and implemented in R.

@@ -57,3 +57,4 @@ my_simplelm <- function(x, y, plot = TRUE) {
   ))
 }
 
+

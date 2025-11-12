@@ -1,1 +1,5 @@
-exportPattern("^[[:alpha:]]+")
+export(my_simplelm)
+export(my_simplelm_cpp)
+useDynLib(SLR, .registration = TRUE)
+importFrom(Rcpp, sourceCpp)
+
